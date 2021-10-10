@@ -1,6 +1,6 @@
 #include "ExtendedDataTypes.idl" // openrtm
 
-module colllision_checker_rtc
+module collision_checker_rtc
 {
 
   struct CollisionIdl
@@ -10,6 +10,7 @@ module colllision_checker_rtc
     string link2;
     RTC::Point3D point2;// local frame
     RTC::Vector3D direction21;// world frame
+    double distance;
   };
 
   struct TimedCollisionSeq
