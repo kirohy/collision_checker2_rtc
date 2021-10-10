@@ -36,9 +36,9 @@ static const char* CollisionChecker_spec[] =
 
 CollisionChecker::CollisionChecker(RTC::Manager* manager)
   : RTC::DataFlowComponentBase(manager),
-  m_qIn_("q", m_q_),
-  m_basePosIn_("basePos", m_basePos_),
-  m_baseRpyIn_("baseRpy", m_baseRpy_),
+  m_qIn_("qIn", m_q_),
+  m_basePosIn_("basePosIn", m_basePos_),
+  m_baseRpyIn_("baseRpyIn", m_baseRpy_),
   m_collisionOut_("collisionOut", m_collision_)
 {
 }
@@ -47,9 +47,9 @@ RTC::ReturnCode_t CollisionChecker::onInitialize()
 {
   std::cerr << "[" << this->m_profile.instance_name << "] onInitialize()" << std::endl;
 
-  addInPort("q", this->m_qIn_);
-  addInPort("basePos", this->m_basePosIn_);
-  addInPort("baseRpy", this->m_baseRpyIn_);
+  addInPort("qIn", this->m_qIn_);
+  addInPort("basePosIn", this->m_basePosIn_);
+  addInPort("baseRpyIn", this->m_baseRpyIn_);
   addOutPort("collisionOut", this->m_collisionOut_);
 
   // load robot model
@@ -66,10 +66,13 @@ RTC::ReturnCode_t CollisionChecker::onInitialize()
 
   // calculate convex hull for all collision mesh
   choreonoid_qhull::convertAllCollisionToConvexHull(this->robot_);
-
   // generate VClip model
   for(int i=0;i<this->robot_->numLinks();i++){
-    this->vclipModelMap_[this->robot_->link(i)] = choreonoid_vclip::convertToVClipModel(this->robot_->link(i)->collisionShape());
+    std::shared_ptr<Vclip::Polyhedron> vclipmodel = choreonoid_vclip::convertToVClipModel(this->robot_->link(i)->collisionShape());
+    this->vclipModelMap_[this->robot_->link(i)] = vclipmodel;
+    if(!vclipmodel){
+      std::cerr << "[" << m_profile.instance_name << "] " << "vclip model " << this->robot_->link(i)->name() << " failed" << std::endl;
+    }
   }
 
   // load collision_pair
@@ -124,16 +127,18 @@ RTC::ReturnCode_t CollisionChecker::onExecute(RTC::UniqueId ec_id)
     std::shared_ptr<CollisionPair>& pair = this->collisionPairs_[i];
     cnoid::Vector3 localp1, localp2;
     double distance;
-    choreonoid_vclip::computeDistance(this->vclipModelMap_[pair->link1],
-                                      pair->link1->p(),
-                                      pair->link1->R(),
-                                      this->vclipModelMap_[pair->link2],
-                                      pair->link2->p(),
-                                      pair->link2->R(),
-                                      distance,
-                                      localp1,
-                                      localp2
-                                      );
+    if(!choreonoid_vclip::computeDistance(this->vclipModelMap_[pair->link1],
+                                          pair->link1->p(),
+                                          pair->link1->R(),
+                                          this->vclipModelMap_[pair->link2],
+                                          pair->link2->p(),
+                                          pair->link2->R(),
+                                          distance,
+                                          localp1,
+                                          localp2
+                                          )){
+      std::cerr << "[" << this->m_profile.instance_name << "] " << "distance between " << pair->link1->name() << " and " << pair->link2->name() <<  " failed" << std::endl;
+    }
     if(distance > 1e-6){
       pair->distance = distance;
       pair->direction21 = (pair->link1->T()*localp1 - pair->link2->T()*localp2).normalized();

@@ -22,15 +22,15 @@ def callback(msg) :
     now = rospy.Time.now()
     markerArray = MarkerArray()
     for collision in msg.collisions:
-        (trans,rot) = listener.lookupTransform(collision.diretcion21.header.frame_id, collision.point2.header.frame_id, rospy.Time(0))
+        (trans,rot) = listener.lookupTransform(collision.direction21.header.frame_id, collision.point2.header.frame_id, rospy.Time(0))
         link2_pose = tf.transformations.compose_matrix(translate=trans,angles=tf.transformations.euler_from_quaternion(rot))
-        scale, shear, angles, translation, persp = tf.transformations.decompose_matrix(link2_pose * tf.transformations.compose_matrix(translate=[collision.point2.point.x,collision.point2.point.y,collision.point2.point.z]))
+        scale, shear, angles, translation, persp = tf.transformations.decompose_matrix(link2_pose.dot(tf.transformations.compose_matrix(translate=[collision.point2.point.x,collision.point2.point.y,collision.point2.point.z])))
 
-        p1 = Point(*(numpy.add(translation,numpy.multiply(collision.direction21,collision.distance))))
+        p1 = Point(*(numpy.add(translation,numpy.multiply([collision.direction21.vector.x,collision.direction21.vector.y,collision.direction21.vector.z],collision.distance))))
         p2 = Point(*translation)
 
-        sphere_color = ColorRGBA(0,1,0,1)
-        line_width = 0.01
+        sphere_color = ColorRGBA(0,1,0,0.5)
+        line_width = 0.005
         line_length = collision.distance
         sphere_scale = 0.02
         # color changes between 0.145(green) -> 0.02(red), under 0.02, it always red
@@ -48,12 +48,13 @@ def callback(msg) :
                 sphere_color = ColorRGBA(ratio, 1 - ratio,0,1) # green -> red
 
         marker = Marker()
-        marker.header.frame_id = collision.diretcion21.header.frame_id
+        marker.header.frame_id = collision.direction21.header.frame_id
         marker.type = marker.LINE_LIST
         marker.action = marker.ADD
         marker.color = sphere_color
         marker.points = [p1, p2]
         marker.scale.x = line_width
+        marker.pose.orientation.w = 1.0
         markerArray.markers.append(marker)
 
         marker = Marker()
@@ -63,7 +64,7 @@ def callback(msg) :
         marker.scale = Vector3(sphere_scale, sphere_scale, sphere_scale)
         marker.color = sphere_color
         marker.pose.orientation.w = 1.0
-        marker.pose.position = collision.point1
+        marker.pose.position = collision.point1.point
         markerArray.markers.append(marker)
 
         marker = Marker()
@@ -73,7 +74,7 @@ def callback(msg) :
         marker.scale = Vector3(sphere_scale, sphere_scale, sphere_scale)
         marker.color = sphere_color
         marker.pose.orientation.w = 1.0
-        marker.pose.position = collision.point2
+        marker.pose.position = collision.point2.point
         markerArray.markers.append(marker)
 
 
