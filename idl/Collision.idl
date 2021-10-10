@@ -1,0 +1,20 @@
+#include "ExtendedDataTypes.idl" // openrtm
+
+module colllision_checker_rtc
+{
+
+  struct CollisionIdl
+  {
+    string link1;
+    RTC::Point3D point1;// local frame
+    string link2;
+    RTC::Point3D point2;// local frame
+    RTC::Vector3D direction21;// world frame
+  };
+
+  struct TimedCollisionSeq
+  {
+    RTC::Time tm;
+    sequence<CollisionIdl> data;
+  };
+};
