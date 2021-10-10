@@ -1,6 +1,7 @@
 <launch>
   <arg name="MODEL_FILE" default=""/>
   <arg name="collision_pair" default=""/>
+  <arg name="periodic_rate" default="100" />
   <arg name="q_port" default=""/>
   <arg name="basePos_port" default=""/>
   <arg name="baseRpy_port" default=""/>
@@ -8,7 +9,7 @@
   <env name="ORBgiopMaxMsgSize" value="2147483648" /> <!-- openrtm setting -->
 
   <node pkg="collision_checker_rtc" name="CollisionChecker" type="CollisionCheckerComp"
-        output="screen" args ='-o "corba.master_manager:localhost:2810" -o "corba.nameservers:localhost:15005" -o "naming.formats:%n.rtc" -o "model:$(arg MODEL_FILE)" -o "collision_pair:$(arg collision_pair)"' />
+        output="screen" args ='-o "corba.master_manager:localhost:2810" -o "corba.nameservers:localhost:15005" -o "naming.formats:%n.rtc" -o "exec_cxt.periodic.rate:$(arg periodic_rate)" -o "model:$(arg MODEL_FILE)" -o "collision_pair:$(arg collision_pair)"' />
   <rtconnect from="$(arg q_port)" to="CollisionChecker0.rtc:qIn"  subscription_type="new"/>
   <rtconnect from="$(arg basePos_port)" to="CollisionChecker0.rtc:basePosIn"  subscription_type="new"/>
   <rtconnect from="$(arg baseRpy_port)" to="CollisionChecker0.rtc:baseRpyIn"  subscription_type="new"/>

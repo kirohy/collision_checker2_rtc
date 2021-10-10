@@ -14,14 +14,21 @@ from visualization_msgs.msg import MarkerArray
 import tf
 from tf.transformations import *
 
+isInitial = True
+
 listener = None
 pub_marker = None
 sub_collision = None
 
 def callback(msg) :
+    global isInitial
+
     now = rospy.Time.now()
     markerArray = MarkerArray()
     for collision in msg.collisions:
+        if isInitial:
+            listener.waitForTransform(collision.direction21.header.frame_id, collision.point2.header.frame_id, rospy.Time(0), rospy.Duration(5.0))
+            isInitial = False
         (trans,rot) = listener.lookupTransform(collision.direction21.header.frame_id, collision.point2.header.frame_id, rospy.Time(0))
         link2_pose = tf.transformations.compose_matrix(translate=trans,angles=tf.transformations.euler_from_quaternion(rot))
         scale, shear, angles, translation, persp = tf.transformations.decompose_matrix(link2_pose.dot(tf.transformations.compose_matrix(translate=[collision.point2.point.x,collision.point2.point.y,collision.point2.point.z])))
@@ -49,6 +56,7 @@ def callback(msg) :
 
         marker = Marker()
         marker.header.frame_id = collision.direction21.header.frame_id
+        marker.header.stamp = now
         marker.type = marker.LINE_LIST
         marker.action = marker.ADD
         marker.color = sphere_color
@@ -92,6 +100,6 @@ if __name__ == '__main__':
 
     listener = tf.TransformListener()
     pub_marker = rospy.Publisher('~marker', MarkerArray, queue_size=1)
-    sub_collision = rospy.Subscriber("~collision", CollisionArray, callback)
+    sub_collision = rospy.Subscriber("~collision", CollisionArray, callback, queue_size=1, buff_size=10000000) # buff_size is necessary to avoid lag
 
     rospy.spin()
