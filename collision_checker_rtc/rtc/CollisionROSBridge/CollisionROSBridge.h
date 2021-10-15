@@ -6,10 +6,10 @@
 #include <rtm/DataOutPort.h>
 #include <rtm/DataInPort.h>
 
-#include <collision_checker_rtc/idl/Collision.hh>
+#include <collision_checker_msgs/idl/Collision.hh>
 
 #include <ros/ros.h>
-#include <collision_checker_rtc/CollisionArray.h>
+#include <collision_checker_msgs/CollisionArray.h>
 
 #include <urdf/model.h>
 #include <cnoid/Body>
@@ -19,19 +19,19 @@ protected:
   std::shared_ptr<urdf::Model> robot_urdf_;
   cnoid::BodyPtr robot_vrml_;
 
-  collision_checker_rtc::TimedCollisionSeq m_collisionRTM_;
-  RTC::InPort <collision_checker_rtc::TimedCollisionSeq> m_collisionRTMIn_;
+  collision_checker_msgs::TimedCollisionSeq m_collisionRTM_;
+  RTC::InPort <collision_checker_msgs::TimedCollisionSeq> m_collisionRTMIn_;
   ros::Publisher pub_;
 
   ros::Subscriber sub_;
-  collision_checker_rtc::TimedCollisionSeq m_collisionROS_;
-  RTC::OutPort <collision_checker_rtc::TimedCollisionSeq> m_collisionROSOut_;
+  collision_checker_msgs::TimedCollisionSeq m_collisionROS_;
+  RTC::OutPort <collision_checker_msgs::TimedCollisionSeq> m_collisionROSOut_;
 public:
   CollisionROSBridge(RTC::Manager* manager);
   virtual RTC::ReturnCode_t onInitialize();
   virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id);
 
-  void topicCallback(const collision_checker_rtc::CollisionArray::ConstPtr& msg);
+  void topicCallback(const collision_checker_msgs::CollisionArray::ConstPtr& msg);
 };
 
 

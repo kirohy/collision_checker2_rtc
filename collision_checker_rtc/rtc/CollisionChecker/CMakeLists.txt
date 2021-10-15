@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   rtmbuild
   choreonoid_vclip
   choreonoid_qhull
+  collision_checker_msgs
   )
 find_package(choreonoid REQUIRED)
 

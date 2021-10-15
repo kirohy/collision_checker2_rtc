@@ -15,7 +15,7 @@
 #include <rtm/DataOutPort.h>
 #include <cnoid/Body>
 
-#include <collision_checker_rtc/idl/Collision.hh>
+#include <collision_checker_msgs/idl/Collision.hh>
 
 namespace Vclip{
   class Polyhedron;
@@ -51,8 +51,8 @@ class CollisionChecker
   RTC::TimedOrientation3D m_baseRpy_;
   RTC::InPort<RTC::TimedOrientation3D> m_baseRpyIn_;
 
-  collision_checker_rtc::TimedCollisionSeq m_collision_;
-  RTC::OutPort<collision_checker_rtc::TimedCollisionSeq> m_collisionOut_;
+  collision_checker_msgs::TimedCollisionSeq m_collision_;
+  RTC::OutPort<collision_checker_msgs::TimedCollisionSeq> m_collisionOut_;
 
  private:
   cnoid::BodyPtr robot_;

@@ -16,4 +16,6 @@
   <depend>choreonoid</depend>
   <depend>choreonoid_vclip</depend>
   <depend>choreonoid_qhull</depend>
+
+  <depend>collision_checker_msgs</depend>
 </package>

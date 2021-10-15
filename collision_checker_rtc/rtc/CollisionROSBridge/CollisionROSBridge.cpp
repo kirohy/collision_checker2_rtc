@@ -30,7 +30,7 @@ RTC::ReturnCode_t CollisionROSBridge::onInitialize(){
 
   ros::NodeHandle pnh("~");
   sub_ = pnh.subscribe("input", 1, &CollisionROSBridge::topicCallback, this);
-  pub_ = pnh.advertise<collision_checker_rtc::CollisionArray>("output", 1);
+  pub_ = pnh.advertise<collision_checker_msgs::CollisionArray>("output", 1);
 
   return RTC::RTC_OK;
 }
@@ -65,10 +65,10 @@ RTC::ReturnCode_t CollisionROSBridge::onExecute(RTC::UniqueId ec_id){
   if(this->m_collisionRTMIn_.isNew()){
     this->m_collisionRTMIn_.read();
 
-    collision_checker_rtc::CollisionArray msg;
+    collision_checker_msgs::CollisionArray msg;
     msg.header.stamp = ros::Time::now();
     for(int i=0;i<m_collisionRTM_.data.length();i++){
-      collision_checker_rtc::Collision state;
+      collision_checker_msgs::Collision state;
       state.point1.header.frame_id = VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link1));
       state.point1.point.x = m_collisionRTM_.data[i].point1.x;
       state.point1.point.y = m_collisionRTM_.data[i].point1.y;
@@ -90,7 +90,7 @@ RTC::ReturnCode_t CollisionROSBridge::onExecute(RTC::UniqueId ec_id){
   return RTC::RTC_OK;
 }
 
-void CollisionROSBridge::topicCallback(const collision_checker_rtc::CollisionArray::ConstPtr& msg) {
+void CollisionROSBridge::topicCallback(const collision_checker_msgs::CollisionArray::ConstPtr& msg) {
   coil::TimeValue coiltm(coil::gettimeofday());
   m_collisionROS_.tm.sec  = coiltm.sec();
   m_collisionROS_.tm.nsec = coiltm.usec() * 1000;

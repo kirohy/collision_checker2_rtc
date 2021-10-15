@@ -8,37 +8,17 @@ add_compile_options(-std=c++11)
 cmake_policy(SET CMP0046 OLD)
 
 find_package(catkin REQUIRED COMPONENTS
-  rtmbuild
-  roscpp
-  geometry_msgs)
-
-################################################
-## Declare ROS messages, services and actions ##
-################################################
-
-## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Collision.msg
-  CollisionArray.msg
-  )
-
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+  rtmbuild)
 
 # initialize rtmbuild (generate_messages is called)
-rtmbuild_init(geometry_msgs)
+rtmbuild_init()
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
 #  INCLUDE_DIRS include
-LIBRARIES CollisionSkel CollisionStub
+#  LIBRARIES
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -46,13 +26,6 @@ LIBRARIES CollisionSkel CollisionStub
 ###########
 ## Build ##
 ###########
-
-# generate idl
-rtmbuild_genidl()
-
-# generate bridge
-# rtmbuild_genbridge()
-add_custom_target(genidl ALL DEPENDS RTMBUILD_${PROJECT_NAME}_genrpc)
 
 add_subdirectory(rtc)
 

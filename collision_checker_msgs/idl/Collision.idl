@@ -1,6 +1,6 @@
 #include "ExtendedDataTypes.idl" // openrtm
 
-module collision_checker_rtc
+module collision_checker_msgs
 {
 
   struct CollisionIdl
