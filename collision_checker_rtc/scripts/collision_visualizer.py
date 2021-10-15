@@ -3,7 +3,7 @@
 import numpy
 import rospy
 
-from collision_checker_rtc.msg import CollisionArray
+from collision_checker_msgs.msg import CollisionArray
 
 from std_msgs.msg import ColorRGBA
 from geometry_msgs.msg import Point
