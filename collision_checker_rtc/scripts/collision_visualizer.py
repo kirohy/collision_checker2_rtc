@@ -67,6 +67,7 @@ def callback(msg) :
 
         marker = Marker()
         marker.header.frame_id = collision.point1.header.frame_id
+        marker.header.stamp = now
         marker.type = marker.SPHERE
         marker.action = marker.ADD
         marker.scale = Vector3(sphere_scale, sphere_scale, sphere_scale)
@@ -77,6 +78,7 @@ def callback(msg) :
 
         marker = Marker()
         marker.header.frame_id = collision.point2.header.frame_id
+        marker.header.stamp = now
         marker.type = marker.SPHERE
         marker.action = marker.ADD
         marker.scale = Vector3(sphere_scale, sphere_scale, sphere_scale)

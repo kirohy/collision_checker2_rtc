@@ -16,7 +16,7 @@
   <rtactivate component="CollisionChecker0.rtc" />
 
   <node pkg="collision_checker_rtc" name="CollisionROSBridge" type="CollisionROSBridgeComp"
-        output="screen" args ='-o "corba.master_manager:localhost:2810" -o "corba.nameservers:localhost:15005" -o "naming.formats:%n.rtc" -o "model:$(arg MODEL_FILE)"' />
+        output="screen" args ='-o "corba.master_manager:localhost:2810" -o "corba.nameservers:localhost:15005" -o "naming.formats:%n.rtc" -o "exec_cxt.periodic.rate:5" -o "model:$(arg MODEL_FILE)"' />
   <rtconnect from="CollisionChecker0.rtc:collisionOut" to="CollisionROSBridge.rtc:collisionIn"  subscription_type="new"/>
   <rtactivate component="CollisionROSBridge.rtc" />
 
