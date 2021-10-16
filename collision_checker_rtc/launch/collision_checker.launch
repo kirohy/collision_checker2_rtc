@@ -2,6 +2,7 @@
   <arg name="MODEL_FILE" default=""/>
   <arg name="collision_pair" default=""/>
   <arg name="periodic_rate" default="100" />
+  <arg name="tf_prefix" default="" />
   <arg name="q_port" default=""/>
   <arg name="basePos_port" default=""/>
   <arg name="baseRpy_port" default=""/>
@@ -16,7 +17,9 @@
   <rtactivate component="CollisionChecker0.rtc" />
 
   <node pkg="collision_checker_rtc" name="CollisionROSBridge" type="CollisionROSBridgeComp"
-        output="screen" args ='-o "corba.master_manager:localhost:2810" -o "corba.nameservers:localhost:15005" -o "naming.formats:%n.rtc" -o "exec_cxt.periodic.rate:5" -o "model:$(arg MODEL_FILE)"' />
+        output="screen" args ='-o "corba.master_manager:localhost:2810" -o "corba.nameservers:localhost:15005" -o "naming.formats:%n.rtc" -o "exec_cxt.periodic.rate:5" -o "model:$(arg MODEL_FILE)"' >
+    <param name="tf_prefix" value="$(arg tf_prefix)"/>
+  </node>
   <rtconnect from="CollisionChecker0.rtc:collisionOut" to="CollisionROSBridge.rtc:collisionIn"  subscription_type="new"/>
   <rtactivate component="CollisionROSBridge.rtc" />
 

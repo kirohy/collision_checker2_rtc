@@ -29,6 +29,12 @@ RTC::ReturnCode_t CollisionROSBridge::onInitialize(){
   this->robot_urdf_->initParam("robot_description");
 
   ros::NodeHandle pnh("~");
+
+  if(pnh.hasParam("tf_prefix")){
+    pnh.getParam("tf_prefix", this->tf_prefix_);
+    if(this->tf_prefix_.size() != 0) this->tf_prefix_ = "/" + this->tf_prefix_ + "/";
+  }
+
   sub_ = pnh.subscribe("input", 1, &CollisionROSBridge::topicCallback, this);
   pub_ = pnh.advertise<collision_checker_msgs::CollisionArray>("output", 1);
 
@@ -69,15 +75,15 @@ RTC::ReturnCode_t CollisionROSBridge::onExecute(RTC::UniqueId ec_id){
     msg.header.stamp = ros::Time::now();
     for(int i=0;i<m_collisionRTM_.data.length();i++){
       collision_checker_msgs::Collision state;
-      state.point1.header.frame_id = VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link1));
+      state.point1.header.frame_id = this->tf_prefix_+VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link1));
       state.point1.point.x = m_collisionRTM_.data[i].point1.x;
       state.point1.point.y = m_collisionRTM_.data[i].point1.y;
       state.point1.point.z = m_collisionRTM_.data[i].point1.z;
-      state.point2.header.frame_id = VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link2));
+      state.point2.header.frame_id = this->tf_prefix_+VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link2));
       state.point2.point.x = m_collisionRTM_.data[i].point2.x;
       state.point2.point.y = m_collisionRTM_.data[i].point2.y;
       state.point2.point.z = m_collisionRTM_.data[i].point2.z;
-      state.direction21.header.frame_id = "odom";
+      state.direction21.header.frame_id = this->tf_prefix_+"odom";
       state.direction21.vector.x = m_collisionRTM_.data[i].direction21.x;
       state.direction21.vector.y = m_collisionRTM_.data[i].direction21.y;
       state.direction21.vector.z = m_collisionRTM_.data[i].direction21.z;

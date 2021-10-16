@@ -19,6 +19,8 @@ protected:
   std::shared_ptr<urdf::Model> robot_urdf_;
   cnoid::BodyPtr robot_vrml_;
 
+  std::string tf_prefix_;
+
   collision_checker_msgs::TimedCollisionSeq m_collisionRTM_;
   RTC::InPort <collision_checker_msgs::TimedCollisionSeq> m_collisionRTMIn_;
   ros::Publisher pub_;
