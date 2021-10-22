@@ -6,18 +6,20 @@
   <arg name="q_port" default=""/>
   <arg name="basePos_port" default=""/>
   <arg name="baseRpy_port" default=""/>
+  <arg name="RTCTREE_NAMESERVERS" default="localhost:15005"/>
+  <arg name="master_manager" default="localhost:2810"/>
 
   <env name="ORBgiopMaxMsgSize" value="2147483648" /> <!-- openrtm setting -->
 
   <node pkg="collision_checker_rtc" name="CollisionChecker" type="CollisionCheckerComp"
-        output="screen" args ='-o "corba.master_manager:localhost:2810" -o "corba.nameservers:localhost:15005" -o "naming.formats:%n.rtc" -o "exec_cxt.periodic.rate:$(arg periodic_rate)" -o "model:$(arg MODEL_FILE)" -o "collision_pair:$(arg collision_pair)"' />
+        output="screen" args ='-o "corba.master_manager:$(arg master_manager)" -o "corba.nameservers:$(arg RTCTREE_NAMESERVERS)" -o "naming.formats:%n.rtc" -o "exec_cxt.periodic.rate:$(arg periodic_rate)" -o "model:$(arg MODEL_FILE)" -o "collision_pair:$(arg collision_pair)"' />
   <rtconnect from="$(arg q_port)" to="CollisionChecker0.rtc:qIn"  subscription_type="new"/>
   <rtconnect from="$(arg basePos_port)" to="CollisionChecker0.rtc:basePosIn"  subscription_type="new"/>
   <rtconnect from="$(arg baseRpy_port)" to="CollisionChecker0.rtc:baseRpyIn"  subscription_type="new"/>
   <rtactivate component="CollisionChecker0.rtc" />
 
   <node pkg="collision_checker_rtc" name="CollisionROSBridge" type="CollisionROSBridgeComp"
-        output="screen" args ='-o "corba.master_manager:localhost:2810" -o "corba.nameservers:localhost:15005" -o "naming.formats:%n.rtc" -o "exec_cxt.periodic.rate:5" -o "model:$(arg MODEL_FILE)"' >
+        output="screen" args ='-o "corba.master_manager:$(arg master_manager)" -o "corba.nameservers:$(arg RTCTREE_NAMESERVERS)" -o "naming.formats:%n.rtc" -o "exec_cxt.periodic.rate:5" -o "model:$(arg MODEL_FILE)"' >
     <param name="tf_prefix" value="$(arg tf_prefix)"/>
   </node>
   <rtconnect from="CollisionChecker0.rtc:collisionOut" to="CollisionROSBridge.rtc:collisionIn"  subscription_type="new"/>
@@ -30,6 +32,7 @@
   <node name="rtmlaunch_tmp" pkg="openrtm_tools" type="rtmlaunch.py"
         args="$(find collision_checker_rtc)/launch/collision_checker.launch"
         output="screen">
+    <env name="RTCTREE_NAMESERVERS" value="$(arg RTCTREE_NAMESERVERS)"/>
     <env name="RTC_CONNECTION_CHECK_ONCE" value="true"/>
     <env name="q_port"    value="$(arg q_port)" />
     <env name="basePos_port"    value="$(arg basePos_port)" />
