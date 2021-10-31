@@ -39,9 +39,9 @@ rtmbuild_init(geometry_msgs)
 ###################################
 catkin_package(
 #  INCLUDE_DIRS include
-LIBRARIES CollisionSkel CollisionStub
+  LIBRARIES CollisionSkel CollisionStub
 #  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+  DEPENDS openrtm_aist
 )
 
 ###########
