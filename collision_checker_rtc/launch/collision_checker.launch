@@ -18,14 +18,14 @@
   <rtconnect from="$(arg baseRpy_port)" to="CollisionChecker0.rtc:baseRpyIn"  subscription_type="new"/>
   <rtactivate component="CollisionChecker0.rtc" />
 
-  <node pkg="collision_checker_rtc" name="CollisionROSBridge" type="CollisionROSBridgeComp"
+  <node pkg="collision_checker_tools" name="CollisionROSBridge" type="CollisionROSBridgeComp"
         output="screen" args ='-o "corba.master_manager:$(arg master_manager)" -o "corba.nameservers:$(arg RTCTREE_NAMESERVERS)" -o "naming.formats:%n.rtc" -o "exec_cxt.periodic.rate:5" -o "model:$(arg MODEL_FILE)"' >
     <param name="tf_prefix" value="$(arg tf_prefix)"/>
   </node>
   <rtconnect from="CollisionChecker0.rtc:collisionOut" to="CollisionROSBridge.rtc:collisionIn"  subscription_type="new"/>
   <rtactivate component="CollisionROSBridge.rtc" />
 
-  <node pkg="collision_checker_rtc" type="collision_visualizer.py" name="collision_visualizer" output="screen">
+  <node pkg="collision_checker_tools" type="collision_visualizer.py" name="collision_visualizer" output="screen">
     <remap from="~collision" to="CollisionROSBridge/output"/>
   </node>
 

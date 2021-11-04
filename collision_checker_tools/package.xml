@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>collision_checker_rtc</name>
+  <name>collision_checker_tools</name>
   <version>0.0.0</version>
-  <description>The collision_checker_rtc package</description>
+  <description>The collision_checker_tools package</description>
 
   <maintainer email="hiraoka@jsk.imi.i.u-tokyo.ac.jp">Naoki-Hiraoka</maintainer>
 
@@ -14,9 +14,6 @@
   <depend>rtmbuild</depend>
   <depend>geometry_msgs</depend>
   <depend>choreonoid</depend>
-  <depend>choreonoid_vclip</depend>
-  <depend>choreonoid_qhull</depend>
 
   <depend>collision_checker_msgs</depend>
-  <depend>collision_checker_tools</depend>
 </package>
