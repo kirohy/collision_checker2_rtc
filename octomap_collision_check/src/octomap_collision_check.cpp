@@ -14,12 +14,14 @@
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
 #include <collision_checker_msgs/CollisionArray.h>
+#include <std_msgs/String.h>
 
 class octomap_collision_check {
 public:
   octomap_collision_check(){
     ros::NodeHandle nh, pnh("~");
-    octomapSub_ = nh.subscribe("octomap", 1, &octomap_collision_check::octomapCallback, this);
+    octomapSub_ = pnh.subscribe("octomap", 1, &octomap_collision_check::octomapCallback, this);
+    linkNameSub_ = pnh.subscribe("linknames", 1, &octomap_collision_check::linkNamesCallback, this);
     markerPub_ = pnh.advertise<visualization_msgs::Marker>("markers",1);
     collisionPub_ = pnh.advertise<collision_checker_msgs::CollisionArray>("collisions",1);
 
@@ -77,6 +79,19 @@ public:
   }
 
 protected:
+  void linkNamesCallback(const std_msgs::String::ConstPtr& msg) {
+    std::shared_ptr<std::vector<std::string> > linkNames = std::make_shared<std::vector<std::string> >();
+    std::stringstream ss(msg->data);
+    std::string item;
+    while (std::getline(ss, item, ',')) {
+      cnoid::LinkPtr link = octomap_collision_check::getVRMLLinkFromURDFName(this->robot_vrml_,this->robot_urdf_,item);
+      if(!link) continue;
+      if(this->verticesMap_[link].size() == 0) continue;
+      linkNames->push_back(item);
+    }
+    this->linkNames_ = linkNames;
+  }
+
   void octomapCallback(const octomap_msgs::Octomap::ConstPtr& msg) {
     std::shared_ptr<octomap::OcTree> octree(dynamic_cast<octomap::OcTree*>(octomap_msgs::binaryMsgToMap(*msg)));
 
@@ -228,6 +243,7 @@ protected:
 
   ros::Timer periodicCollisionCheckTimer_;
   ros::Subscriber octomapSub_;
+  ros::Subscriber linkNameSub_;
   ros::Publisher markerPub_;
   ros::Publisher collisionPub_;
   tf::TransformListener tfListener_;
