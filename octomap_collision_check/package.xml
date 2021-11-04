@@ -13,4 +13,5 @@
   <depend>octmap_msgs</depend>
   <depend>octmap_ros</depend>
   <depend>moveit_core</depend>
+  <depend>collision_checker_msgs</depend>
 </package>
