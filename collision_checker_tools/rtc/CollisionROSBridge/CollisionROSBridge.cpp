@@ -41,7 +41,7 @@ RTC::ReturnCode_t CollisionROSBridge::onInitialize(){
   return RTC::RTC_OK;
 }
 
-std::string URDFToVRMLLinkName(cnoid::BodyPtr robot_vrml, std::shared_ptr<urdf::Model> robot_urdf, const std::string& URDFLinkName){
+std::string URDFToVRMLLinkName(cnoid::BodyPtr robot_vrml, std::shared_ptr<urdf::Model> robot_urdf, const std::string& URDFLinkName, const std::string& odom){
   std::shared_ptr<const urdf::Link> link = robot_urdf->getLink(URDFLinkName);
   if(link){
     if(link->parent_joint){
@@ -49,17 +49,21 @@ std::string URDFToVRMLLinkName(cnoid::BodyPtr robot_vrml, std::shared_ptr<urdf::
     }else if (link == robot_urdf->getRoot()){
       return robot_vrml->rootLink()->name();
     }
+  }else if (URDFLinkName == odom){
+    return "";
   }
   std::cerr << "\x1b[31m" << "failed to find link [" << URDFLinkName << "]" << "\x1b[39m" << std::endl;
   return URDFLinkName;
 };
 
-std::string VRMLToURDFLinkName(cnoid::BodyPtr robot_vrml, std::shared_ptr<urdf::Model> robot_urdf, const std::string& VRMLLinkName){
+std::string VRMLToURDFLinkName(cnoid::BodyPtr robot_vrml, std::shared_ptr<urdf::Model> robot_urdf, const std::string& VRMLLinkName, const std::string& odom){
   std::shared_ptr<const urdf::Joint> joint = robot_urdf->getJoint(VRMLLinkName);
   if(joint){
     return joint->child_link_name;
   }else if (robot_vrml->rootLink()->name() == VRMLLinkName){
     return robot_urdf->getRoot()->name;
+  }else if (VRMLLinkName == ""){
+    return odom;
   }
   std::cerr << "\x1b[31m" << "failed to find link [" << VRMLLinkName << "]" << "\x1b[39m" << std::endl;
   return VRMLLinkName;
@@ -75,11 +79,11 @@ RTC::ReturnCode_t CollisionROSBridge::onExecute(RTC::UniqueId ec_id){
     msg.header.stamp = ros::Time::now();
     for(int i=0;i<m_collisionRTM_.data.length();i++){
       collision_checker_msgs::Collision state;
-      state.point1.header.frame_id = this->tf_prefix_+VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link1));
+      state.point1.header.frame_id = this->tf_prefix_+VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link1), this->tf_prefix_+"odom");
       state.point1.point.x = m_collisionRTM_.data[i].point1.x;
       state.point1.point.y = m_collisionRTM_.data[i].point1.y;
       state.point1.point.z = m_collisionRTM_.data[i].point1.z;
-      state.point2.header.frame_id = this->tf_prefix_+VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link2));
+      state.point2.header.frame_id = this->tf_prefix_+VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link2), this->tf_prefix_+"odom");
       state.point2.point.x = m_collisionRTM_.data[i].point2.x;
       state.point2.point.y = m_collisionRTM_.data[i].point2.y;
       state.point2.point.z = m_collisionRTM_.data[i].point2.z;
@@ -102,11 +106,11 @@ void CollisionROSBridge::topicCallback(const collision_checker_msgs::CollisionAr
   m_collisionROS_.tm.nsec = coiltm.usec() * 1000;
   m_collisionROS_.data.length(msg->collisions.size());
   for(int i=0;i<msg->collisions.size();i++){
-    m_collisionROS_.data[i].link1 = URDFToVRMLLinkName(this->robot_vrml_, this->robot_urdf_, msg->collisions[i].point1.header.frame_id).c_str();
+    m_collisionROS_.data[i].link1 = URDFToVRMLLinkName(this->robot_vrml_, this->robot_urdf_, msg->collisions[i].point1.header.frame_id,this->tf_prefix_+"odom").c_str();
     m_collisionROS_.data[i].point1.x = msg->collisions[i].point1.point.x;
     m_collisionROS_.data[i].point1.y = msg->collisions[i].point1.point.y;
     m_collisionROS_.data[i].point1.z = msg->collisions[i].point1.point.z;
-    m_collisionROS_.data[i].link2 = URDFToVRMLLinkName(this->robot_vrml_, this->robot_urdf_, msg->collisions[i].point2.header.frame_id).c_str();
+    m_collisionROS_.data[i].link2 = URDFToVRMLLinkName(this->robot_vrml_, this->robot_urdf_, msg->collisions[i].point2.header.frame_id,this->tf_prefix_+"odom").c_str();
     m_collisionROS_.data[i].point2.x = msg->collisions[i].point2.point.x;
     m_collisionROS_.data[i].point2.y = msg->collisions[i].point2.point.y;
     m_collisionROS_.data[i].point2.z = msg->collisions[i].point2.point.z;
