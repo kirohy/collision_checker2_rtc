@@ -42,7 +42,7 @@ RTC::ReturnCode_t CollisionROSBridge::onInitialize(){
 }
 
 std::string URDFToVRMLLinkName(cnoid::BodyPtr robot_vrml, std::shared_ptr<urdf::Model> robot_urdf, const std::string& URDFLinkName, const std::string& odom){
-  std::shared_ptr<const urdf::Link> link = robot_urdf->getLink(URDFLinkName);
+  urdf::LinkConstSharedPtr link = robot_urdf->getLink(URDFLinkName);
   if(link){
     if(link->parent_joint){
       return link->parent_joint->name;
@@ -57,7 +57,7 @@ std::string URDFToVRMLLinkName(cnoid::BodyPtr robot_vrml, std::shared_ptr<urdf::
 };
 
 std::string VRMLToURDFLinkName(cnoid::BodyPtr robot_vrml, std::shared_ptr<urdf::Model> robot_urdf, const std::string& VRMLLinkName, const std::string& odom){
-  std::shared_ptr<const urdf::Joint> joint = robot_urdf->getJoint(VRMLLinkName);
+  urdf::JointConstSharedPtr joint = robot_urdf->getJoint(VRMLLinkName);
   if(joint){
     return joint->child_link_name;
   }else if (robot_vrml->rootLink()->name() == VRMLLinkName){
