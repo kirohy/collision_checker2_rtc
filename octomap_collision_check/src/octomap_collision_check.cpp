@@ -93,7 +93,20 @@ protected:
   }
 
   void octomapCallback(const octomap_msgs::Octomap::ConstPtr& msg) {
-    std::shared_ptr<octomap::OcTree> octree(dynamic_cast<octomap::OcTree*>(octomap_msgs::binaryMsgToMap(*msg)));
+    std::shared_ptr<octomap::AbstractOcTree> absoctree = std::shared_ptr<octomap::AbstractOcTree>(octomap_msgs::msgToMap(*msg));
+    if(!absoctree) return;
+
+    std::shared_ptr<octomap::OcTree> octree = std::dynamic_pointer_cast<octomap::OcTree>(absoctree);
+
+    if(!octree){
+      std::shared_ptr<octomap::ColorOcTree> coloroctree = std::dynamic_pointer_cast<octomap::ColorOcTree>(absoctree);
+      if(coloroctree){
+	std::stringstream ss;
+	coloroctree->writeBinary(ss);
+	octree = std::make_shared<octomap::OcTree>(absoctree->getResolution());
+	if(!octree->readBinary(ss)) octree = nullptr;
+      }
+    }
 
     if(octree){
       this->fieldFrameId_ = msg->header.frame_id;
