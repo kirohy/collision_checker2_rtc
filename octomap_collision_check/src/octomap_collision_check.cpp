@@ -104,7 +104,7 @@ protected:
       this->field_ = nullptr;
     }
 
-    if(this->field_){
+    if(this->field_ && this->markerPub_.getNumSubscribers() > 0){
       visualization_msgs::Marker marker;
       this->field_->getIsoSurfaceMarkers(0.1, 0.12, msg->header.frame_id, msg->header.stamp,marker);
       this->markerPub_.publish(marker);
