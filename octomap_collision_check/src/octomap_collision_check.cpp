@@ -49,15 +49,15 @@ public:
           float l2 = (v2 - v0).norm();
           cnoid::Vector3f n1 = (v1 - v0).normalized();
           cnoid::Vector3f n2 = (v2 - v0).normalized();
-          for(int m=0;m<l1;m++){
-            for(int n=0;n<l2-l2/l1*m;n++){
+          for(double m=0;m<l1;m+=resolution){
+            for(double n=0;n<l2-l2/l1*m;n+=resolution){
               vertices.push_back(v0 + n1 * m + n2 * n);
             }
-            int n=l2-l2/l1*m;
+            double n=l2-l2/l1*m;
             vertices.push_back(v0 + n1 * m + n2 * n);
           }
-          int m = l1;
-          int n= 0;
+          double m = l1;
+          double n= 0;
           vertices.push_back(v0 + n1 * m + n2 * n);
         }
       }
