@@ -322,20 +322,20 @@ protected:
     cnoid::Vector3 dimensions = cnoid::Vector3::Zero();
 
     bool isInside(const cnoid::Vector3f& p) {
-      cnoid::Vector3f plocal = parentLinkPoseinv * p;
+      cnoid::Vector3f plocal = worldPoseinv * p;
       return
-        (plocal[0] < dimensions[0]) &&
-        (plocal[1] < dimensions[1]) &&
-        (plocal[2] < dimensions[2]) &&
-        (plocal[0] > -dimensions[0]) &&
-        (plocal[1] > -dimensions[1]) &&
-        (plocal[2] > -dimensions[2]);
+        (plocal[0] < dimensions[0]/2) &&
+        (plocal[1] < dimensions[1]/2) &&
+        (plocal[2] < dimensions[2]/2) &&
+        (plocal[0] > -dimensions[0]/2) &&
+        (plocal[1] > -dimensions[1]/2) &&
+        (plocal[2] > -dimensions[2]/2);
     }
-    void setParentLinkPose(const Eigen::Affine3d& pose){
-      parentLinkPoseinv = pose.inverse().cast<float>();
+    void setParentLinkPose(const Eigen::Affine3d& parentLinkPose){
+      worldPoseinv = (parentLinkPose * pose).inverse().cast<float>();
     }
   private:
-    Eigen::Affine3f parentLinkPoseinv;
+    Eigen::Affine3f worldPoseinv;
   };
   std::shared_ptr<std::vector<boundingBox > > ignoreBoundingBox_;
 };
