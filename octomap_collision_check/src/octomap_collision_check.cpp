@@ -13,8 +13,10 @@
 #include <unordered_set>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
 #include <collision_checker_msgs/CollisionArray.h>
 #include <std_msgs/String.h>
+#include <jsk_recognition_msgs/BoundingBoxArray.h>
 
 class octomap_collision_check {
 public:
@@ -22,6 +24,7 @@ public:
     ros::NodeHandle nh, pnh("~");
     octomapSub_ = pnh.subscribe("octomap", 1, &octomap_collision_check::octomapCallback, this);
     linkNameSub_ = pnh.subscribe("linknames", 1, &octomap_collision_check::linkNamesCallback, this);
+    ignoreBoundingBoxSub_ = pnh.subscribe("ignore_bounding_box", 1, &octomap_collision_check::ignoreBoundingBoxCallback, this);
     markerPub_ = pnh.advertise<visualization_msgs::Marker>("markers",1);
     collisionPub_ = pnh.advertise<collision_checker_msgs::CollisionArray>("collisions",1);
 
@@ -74,6 +77,8 @@ public:
       linkNames_->push_back(urdflink->name);
     }
 
+    ignoreBoundingBox_ = std::make_shared<std::vector<boundingBox> >();
+
     periodicCollisionCheckTimer_ = nh.createTimer(ros::Duration(1.0 / 25),
                                                   boost::bind(&octomap_collision_check::periodicCollisionCheckTimerCallback, this, _1));
   }
@@ -90,6 +95,23 @@ protected:
       linkNames->push_back(item);
     }
     this->linkNames_ = linkNames;
+  }
+
+  void ignoreBoundingBoxCallback(const jsk_recognition_msgs::BoundingBoxArray::ConstPtr& msg){
+    std::shared_ptr<std::vector<boundingBox> > ignoreBoundingBox = std::make_shared<std::vector<boundingBox> >();
+
+    for(int i=0;i<msg->boxes.size();i++){
+      boundingBox box;
+      box.linkName = msg->boxes[i].header.frame_id;
+      Eigen::Isometry3d pose;
+      tf::poseMsgToEigen(msg->boxes[i].pose,pose);
+      box.pose = pose;
+      tf::vectorMsgToEigen(msg->boxes[i].dimensions,box.dimensions);
+
+      ignoreBoundingBox->push_back(box);
+    }
+
+    this->ignoreBoundingBox_ = ignoreBoundingBox;
   }
 
   void octomapCallback(const octomap_msgs::Octomap::ConstPtr& msg) {
@@ -134,6 +156,20 @@ protected:
     msg.header.frame_id = fieldFrameId;
     msg.header.stamp = ros::Time::now();
 
+    // update ignore bounding box
+    std::shared_ptr<std::vector<boundingBox> > ignoreBoundingBox = this->ignoreBoundingBox_;
+    for(int i=0;i<ignoreBoundingBox->size();i++){
+      tf::StampedTransform transform;
+      try{
+        tfListener_.lookupTransform(fieldFrameId, (*ignoreBoundingBox)[i].linkName, ros::Time(0), transform);
+      } catch (std::exception& ex) {
+        continue;
+      }
+      Eigen::Affine3d linkT_d;
+      tf::transformTFToEigen(transform,linkT_d);
+      (*ignoreBoundingBox)[i].setParentLinkPose(linkT_d);
+    }
+
     std::shared_ptr<std::vector<std::string> > linkNames = this->linkNames_;
     for(int i=0;i<linkNames->size();i++){
       tf::StampedTransform transform;
@@ -156,6 +192,16 @@ protected:
       const std::vector<cnoid::Vector3f>& vertices = this->verticesMap_[link];
       for(int j=0;j<vertices.size();j++){
         cnoid::Vector3f v = linkT * vertices[j];
+
+        bool ignore = false;
+        for(int k=0;k<ignoreBoundingBox->size();k++){
+          if((*ignoreBoundingBox)[k].isInside(v)) {
+            ignore = true;
+            break;
+          }
+        }
+        if(ignore) continue;
+
         cnoid::Vector3 grad;
         bool in_bound;
         double dist = this->field_->getDistanceGradient(v[0],v[1],v[2],grad[0],grad[1],grad[2],in_bound);
@@ -257,6 +303,7 @@ protected:
   ros::Timer periodicCollisionCheckTimer_;
   ros::Subscriber octomapSub_;
   ros::Subscriber linkNameSub_;
+  ros::Subscriber ignoreBoundingBoxSub_;
   ros::Publisher markerPub_;
   ros::Publisher collisionPub_;
   tf::TransformListener tfListener_;
@@ -267,6 +314,30 @@ protected:
   cnoid::BodyPtr robot_vrml_;
   std::map<cnoid::LinkPtr, std::vector<cnoid::Vector3f> > verticesMap_;
   std::shared_ptr<std::vector<std::string> > linkNames_;
+
+  class boundingBox {
+  public:
+    cnoid::Position pose = cnoid::Position::Identity();
+    std::string linkName;
+    cnoid::Vector3 dimensions = cnoid::Vector3::Zero();
+
+    bool isInside(const cnoid::Vector3f& p) {
+      cnoid::Vector3f plocal = parentLinkPoseinv * p;
+      return
+        (plocal[0] < dimensions[0]) &&
+        (plocal[1] < dimensions[1]) &&
+        (plocal[2] < dimensions[2]) &&
+        (plocal[0] > -dimensions[0]) &&
+        (plocal[1] > -dimensions[1]) &&
+        (plocal[2] > -dimensions[2]);
+    }
+    void setParentLinkPose(const Eigen::Affine3d& pose){
+      parentLinkPoseinv = pose.inverse().cast<float>();
+    }
+  private:
+    Eigen::Affine3f parentLinkPoseinv;
+  };
+  std::shared_ptr<std::vector<boundingBox > > ignoreBoundingBox_;
 };
 
 int main(int argc, char** argv){

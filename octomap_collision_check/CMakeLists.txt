@@ -11,7 +11,9 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_core
   tf2_ros
   tf_conversions
+  eigen_conversions
   collision_checker_msgs
+  jsk_recognition_msgs
   )
 find_package(choreonoid REQUIRED)
 

@@ -14,4 +14,5 @@
   <depend>octmap_ros</depend>
   <depend>moveit_core</depend>
   <depend>collision_checker_msgs</depend>
+  <depend>jsk_recognition_msgs</depend>
 </package>
