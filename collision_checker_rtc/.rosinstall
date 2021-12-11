@@ -11,3 +11,6 @@
 - git:
     local-name: choreonoid_collision_tools
     uri: https://github.com/Naoki-Hiraoka/choreonoid_collision_tools.git
+- git:
+    local-name: rtmros_msg_bridge
+    uri: https://github.com/Naoki-Hiraoka/rtmros_msg_bridge.git

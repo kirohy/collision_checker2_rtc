@@ -16,6 +16,7 @@
   <depend>choreonoid</depend>
   <depend>choreonoid_vclip</depend>
   <depend>choreonoid_qhull</depend>
+  <depend>octomap_msgs_rtmros_bridge</depend>
 
   <depend>collision_checker_msgs</depend>
   <depend>collision_checker_tools</depend>

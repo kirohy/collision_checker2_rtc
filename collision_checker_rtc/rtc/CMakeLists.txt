@@ -1,1 +1,2 @@
 add_subdirectory(CollisionChecker)
+add_subdirectory(OctomapCollisionChecker)
