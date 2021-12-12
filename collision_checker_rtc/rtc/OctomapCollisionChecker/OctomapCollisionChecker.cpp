@@ -192,18 +192,19 @@ RTC::ReturnCode_t OctomapCollisionChecker::onExecute(RTC::UniqueId ec_id)
 
   // octomapCallbackが別スレッドで上書きしてもいいようにコピー
   std::shared_ptr<distance_field::PropagationDistanceField> field = this->field_;
+  cnoid::Position fieldOrigin = this->fieldOrigin_;
+  Eigen::Affine3f fieldOriginInv = fieldOrigin.inverse().cast<float>();
   if(field) {
     // update ignore bounding box
     for(int i=0;i<this->ignoreBoundingBox_.size();i++) this->ignoreBoundingBox_[i].setParentLinkPose();
 
-    Eigen::Affine3f fieldOriginInv = this->fieldOrigin_.inverse().cast<float>();
 
     for(int i=0;i<this->targetLinks_.size();i++){
       cnoid::LinkPtr link = this->targetLinks_[i];
       Eigen::Affine3f linkT = link->T().cast<float>();
 
-      double min_dist = 1.0;
-      cnoid::Vector3f closest_v_fieldLocal = cnoid::Vector3f::Zero();
+      double min_dist = this->maxDistance_ + 1;
+      cnoid::Vector3f closest_v = cnoid::Vector3f::Zero();
       cnoid::Vector3 closest_point_fieldLocal = cnoid::Vector3::Zero();
       cnoid::Vector3 closest_direction_fieldLocal = cnoid::Vector3::UnitX();
 
@@ -230,19 +231,18 @@ RTC::ReturnCode_t OctomapCollisionChecker::onExecute(RTC::UniqueId ec_id)
             closest_direction_fieldLocal[0] = (grad[0]/grad.norm());
             closest_direction_fieldLocal[1] = (grad[1]/grad.norm());
             closest_direction_fieldLocal[2] = (grad[2]/grad.norm());
-            closest_point_fieldLocal[0] = v[0]-closest_direction_fieldLocal[0]*dist;
-            closest_point_fieldLocal[1] = v[1]-closest_direction_fieldLocal[1]*dist;
-            closest_point_fieldLocal[2] = v[2]-closest_direction_fieldLocal[2]*dist;
+            closest_point_fieldLocal[0] = v_fieldLocal[0]-closest_direction_fieldLocal[0]*dist;
+            closest_point_fieldLocal[1] = v_fieldLocal[1]-closest_direction_fieldLocal[1]*dist;
+            closest_point_fieldLocal[2] = v_fieldLocal[2]-closest_direction_fieldLocal[2]*dist;
             min_dist = dist;
-            closest_v_fieldLocal = vertices[j];
+            closest_v = vertices[j];
           }
         }
       }
 
-      if(min_dist < 1.0 && min_dist > 0.0){
-        cnoid::Vector3 closest_v = this->fieldOrigin_ * closest_v_fieldLocal.cast<double>();
+      if(min_dist <= this->maxDistance_ && min_dist >= this->minDistance_){
         cnoid::Vector3 closest_point = this->fieldOrigin_ * closest_point_fieldLocal;
-        cnoid::Vector3 closest_direction = this->fieldOrigin_ * closest_direction_fieldLocal;
+        cnoid::Vector3 closest_direction = this->fieldOrigin_.linear() * closest_direction_fieldLocal;
 
         collision_checker_msgs::CollisionIdl collision;
         collision.link1 = link->name().c_str();
@@ -273,6 +273,8 @@ RTC::ReturnCode_t OctomapCollisionChecker::onExecute(RTC::UniqueId ec_id)
 }
 
 void OctomapCollisionChecker::octomapCallback(std::shared_ptr<octomap_msgs::Octomap> octomap, cnoid::Position fieldOrigin){
+  if(this->debuglevel_ >= 2.0) std::cerr << "[" << this->m_profile.instance_name << "] octomapCallback start" << std::endl;
+
   std::shared_ptr<octomap::AbstractOcTree> absoctree = std::shared_ptr<octomap::AbstractOcTree>(octomap_msgs::msgToMap(*octomap));
   if(!absoctree) {
     this->thread_done_ = true;
@@ -294,7 +296,12 @@ void OctomapCollisionChecker::octomapCallback(std::shared_ptr<octomap_msgs::Octo
   if(octree){
     double minx,miny,minz; octree->getMetricMin(minx,miny,minz);
     double maxx,maxy,maxz; octree->getMetricMax(maxx,maxy,maxz);
-    this->field_ = std::make_shared<distance_field::PropagationDistanceField>(*octree, octomap::point3d(minx,miny,minz),octomap::point3d(maxx,maxy,maxz), 1.0, false);
+    this->field_ = std::make_shared<distance_field::PropagationDistanceField>(*octree,
+                                                                              octomap::point3d(minx,miny,minz),
+                                                                              octomap::point3d(maxx,maxy,maxz),
+                                                                              this->maxDistance_,
+                                                                              true // true: めり込み時に離れる方向を示す. 裏側に行かないよう、minDistanceをある程度大きくせよ
+                                                                              );
     this->fieldOrigin_ = fieldOrigin;
   }else{
     this->field_ = nullptr;
@@ -302,6 +309,8 @@ void OctomapCollisionChecker::octomapCallback(std::shared_ptr<octomap_msgs::Octo
   }
 
   this->thread_done_ = true;
+
+  if(this->debuglevel_ >= 2.0) std::cerr << "[" << this->m_profile.instance_name << "] octomapCallback end" << std::endl;
 }
 
 extern "C"

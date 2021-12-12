@@ -79,11 +79,11 @@ RTC::ReturnCode_t CollisionROSBridge::onExecute(RTC::UniqueId ec_id){
     msg.header.stamp = ros::Time::now();
     for(int i=0;i<m_collisionRTM_.data.length();i++){
       collision_checker_msgs::Collision state;
-      state.point1.header.frame_id = this->tf_prefix_+VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link1), this->tf_prefix_+"odom");
+      state.point1.header.frame_id = this->tf_prefix_+VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link1), "odom");
       state.point1.point.x = m_collisionRTM_.data[i].point1.x;
       state.point1.point.y = m_collisionRTM_.data[i].point1.y;
       state.point1.point.z = m_collisionRTM_.data[i].point1.z;
-      state.point2.header.frame_id = this->tf_prefix_+VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link2), this->tf_prefix_+"odom");
+      state.point2.header.frame_id = this->tf_prefix_+VRMLToURDFLinkName(this->robot_vrml_, this->robot_urdf_, std::string(m_collisionRTM_.data[i].link2), "odom");
       state.point2.point.x = m_collisionRTM_.data[i].point2.x;
       state.point2.point.y = m_collisionRTM_.data[i].point2.y;
       state.point2.point.z = m_collisionRTM_.data[i].point2.z;
