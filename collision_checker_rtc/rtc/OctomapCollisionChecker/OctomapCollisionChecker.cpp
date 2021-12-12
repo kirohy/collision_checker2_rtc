@@ -111,6 +111,14 @@ RTC::ReturnCode_t OctomapCollisionChecker::onInitialize()
     std::vector<cnoid::Vector3f> vertices; // 同じvertexが2回カウントされている TODO
     cnoid::SgMeshPtr mesh = convertToSgMesh(link->collisionShape());
     if(mesh) {
+      mesh->updateBoundingBox();
+      cnoid::BoundingBoxf bbx = mesh->boundingBox();
+      cnoid::Vector3f bbxSize = bbx.max() - bbx.min();
+      std::vector<std::vector<std::vector<bool> > > bin(int(bbxSize[0]/resolution)+1,
+                                                        std::vector<std::vector<bool> >(int(bbxSize[1]/resolution)+1,
+                                                                                        std::vector<bool>(int(bbxSize[2]/resolution)+1,
+                                                                                                          false)));
+
       for(int j=0;j<mesh->numTriangles();j++){
         cnoid::Vector3f v0 = mesh->vertices()->at(mesh->triangle(j)[0]);
         cnoid::Vector3f v1 = mesh->vertices()->at(mesh->triangle(j)[1]);
@@ -121,14 +129,35 @@ RTC::ReturnCode_t OctomapCollisionChecker::onInitialize()
         cnoid::Vector3f n2 = (v2 - v0).normalized();
         for(double m=0;m<l1;m+=resolution){
           for(double n=0;n<l2-l2/l1*m;n+=resolution){
-            vertices.push_back(v0 + n1 * m + n2 * n);
+            cnoid::Vector3f v = v0 + n1 * m + n2 * n;
+            int x = int((v[0] - bbx.min()[0])/resolution);
+            int y = int((v[1] - bbx.min()[1])/resolution);
+            int z = int((v[2] - bbx.min()[2])/resolution);
+            if(!bin[x][y][z]){
+              bin[x][y][z] = true;
+              vertices.push_back(v);
+            }
           }
           double n=l2-l2/l1*m;
-          vertices.push_back(v0 + n1 * m + n2 * n);
+          cnoid::Vector3f v = v0 + n1 * m + n2 * n;
+          int x = int((v[0] - bbx.min()[0])/resolution);
+          int y = int((v[1] - bbx.min()[1])/resolution);
+          int z = int((v[2] - bbx.min()[2])/resolution);
+          if(!bin[x][y][z]){
+            bin[x][y][z] = true;
+            vertices.push_back(v);
+          }
         }
         double m = l1;
         double n= 0;
-        vertices.push_back(v0 + n1 * m + n2 * n);
+        cnoid::Vector3f v = v0 + n1 * m + n2 * n;
+        int x = int((v[0] - bbx.min()[0])/resolution);
+        int y = int((v[1] - bbx.min()[1])/resolution);
+        int z = int((v[2] - bbx.min()[2])/resolution);
+        if(!bin[x][y][z]){
+          bin[x][y][z] = true;
+          vertices.push_back(v);
+        }
       }
     }
     verticesMap_[link] = vertices;
