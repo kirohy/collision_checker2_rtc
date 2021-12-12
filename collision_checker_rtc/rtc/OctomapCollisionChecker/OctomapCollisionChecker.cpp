@@ -338,11 +338,13 @@ void OctomapCollisionChecker::octomapCallback(std::shared_ptr<octomap_msgs::Octo
                                                                               true // true: めり込み時に離れる方向を示す. 裏側に行かないよう、minDistanceをある程度大きくせよ
                                                                               );
     this->fieldOrigin_ = fieldOrigin;
+    octree->clear(); // destructor of OcTree does not free memory for internal data.
   }else{
     this->field_ = nullptr;
     this->fieldOrigin_ = cnoid::Position::Identity();
   }
 
+  absoctree->clear(); // destructor of OcTree does not free memory for internal data.
   this->thread_done_ = true;
 
   if(this->debuglevel_ >= 2.0) std::cerr << "[" << this->m_profile.instance_name << "] octomapCallback end" << std::endl;
