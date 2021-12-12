@@ -100,7 +100,7 @@ class OctomapCollisionChecker
   std::unordered_map<cnoid::LinkPtr, std::vector<cnoid::Vector3f> > verticesMap_;
 
   // params
-  int debuglevel_ = 2;
+  int debuglevel_ = 0;
   double maxDistance_ = 0.5;
   double minDistance_ = -0.02;
   std::vector<cnoid::LinkPtr> targetLinks_;
