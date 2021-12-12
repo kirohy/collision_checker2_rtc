@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <utility>
 
@@ -15,6 +16,8 @@
 #include <rtm/DataInPort.h>
 #include <rtm/DataOutPort.h>
 #include <cnoid/Body>
+
+#include "OctomapCollisionCheckerService_impl.h"
 
 #include <collision_checker_msgs/idl/Collision.hh>
 #include <octomap_msgs_rtmros_bridge/idl/Octomap.hh>
@@ -36,6 +39,9 @@ class OctomapCollisionChecker
   virtual RTC::ReturnCode_t onInitialize();
 
   virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id);
+
+  bool setParams(const collision_checker_rtc::OctomapCollisionCheckerService::OctomapCollisionCheckerParam& i_param);
+  bool getParams(collision_checker_rtc::OctomapCollisionCheckerService::OctomapCollisionCheckerParam& i_param);
 
   void octomapCallback(std::shared_ptr<octomap_msgs::Octomap> octomap, cnoid::Position fieldOrigin);
 
@@ -78,7 +84,12 @@ class OctomapCollisionChecker
   collision_checker_msgs::TimedCollisionSeq m_collision_;
   RTC::OutPort<collision_checker_msgs::TimedCollisionSeq> m_collisionOut_;
 
+  OctomapCollisionCheckerService_impl m_service0_;
+  RTC::CorbaPort m_OctomapCollisionCheckerServicePort_;
+
  private:
+  std::mutex mutex_;
+
   cnoid::BodyPtr robot_;
 
   std::shared_ptr<std::thread> thread_;
@@ -87,13 +98,14 @@ class OctomapCollisionChecker
   std::shared_ptr<distance_field::PropagationDistanceField> field_;
   cnoid::Position fieldOrigin_ = cnoid::Position::Identity();
   std::unordered_map<cnoid::LinkPtr, std::vector<cnoid::Vector3f> > verticesMap_;
-  std::vector<cnoid::LinkPtr> targetLinks_;
-  std::vector<boundingBox > ignoreBoundingBox_;
 
   // params
   int debuglevel_ = 2;
   double maxDistance_ = 0.5;
   double minDistance_ = -0.02;
+  std::vector<cnoid::LinkPtr> targetLinks_;
+  std::vector<boundingBox > ignoreBoundingBox_;
+
 };
 
 

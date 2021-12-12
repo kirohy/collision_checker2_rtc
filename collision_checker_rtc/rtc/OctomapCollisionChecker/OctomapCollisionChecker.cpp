@@ -78,8 +78,10 @@ OctomapCollisionChecker::OctomapCollisionChecker(RTC::Manager* manager)
   m_basePosIn_("basePosIn", m_basePos_),
   m_baseRpyIn_("baseRpyIn", m_baseRpy_),
   m_octomapIn_("octomapIn", m_octomap_),
-  m_collisionOut_("collisionOut", m_collision_)
+  m_collisionOut_("collisionOut", m_collision_),
+  m_OctomapCollisionCheckerServicePort_("OctomapCollisionCheckerService")
 {
+  this->m_service0_.setComp(this);
 }
 
 RTC::ReturnCode_t OctomapCollisionChecker::onInitialize()
@@ -91,6 +93,8 @@ RTC::ReturnCode_t OctomapCollisionChecker::onInitialize()
   addInPort("baseRpyIn", this->m_baseRpyIn_);
   addInPort("octomapIn", this->m_octomapIn_);
   addOutPort("collisionOut", this->m_collisionOut_);
+  this->m_OctomapCollisionCheckerServicePort_.registerProvider("service0", "OctomapCollisionCheckerService", this->m_service0_);
+  addPort(this->m_OctomapCollisionCheckerServicePort_);
 
   // load robot model
   cnoid::BodyLoader bodyLoader;
@@ -175,6 +179,8 @@ RTC::ReturnCode_t OctomapCollisionChecker::onInitialize()
 
 RTC::ReturnCode_t OctomapCollisionChecker::onExecute(RTC::UniqueId ec_id)
 {
+  std::lock_guard<std::mutex> guard(this->mutex_);
+
   double dt = 1.0 / this->get_context(ec_id)->get_rate();
 
   if (this->thread_done_ && this->thread_){
@@ -341,6 +347,62 @@ void OctomapCollisionChecker::octomapCallback(std::shared_ptr<octomap_msgs::Octo
 
   if(this->debuglevel_ >= 2.0) std::cerr << "[" << this->m_profile.instance_name << "] octomapCallback end" << std::endl;
 }
+
+bool OctomapCollisionChecker::setParams(const collision_checker_rtc::OctomapCollisionCheckerService::OctomapCollisionCheckerParam& i_param){
+  std::lock_guard<std::mutex> guard(this->mutex_);
+  std::cerr << "[" << m_profile.instance_name << "] "<< "setParams" << std::endl;
+  this->debuglevel_ = i_param.debugLevel;
+  this->maxDistance_ = i_param.maxDistance;
+  this->minDistance_ = i_param.minDistance;
+  std::vector<cnoid::LinkPtr> targetLinksNew;
+  for(int i=0;i<i_param.targetLinks.length();i++){
+    cnoid::LinkPtr link = this->robot_->link(std::string(i_param.targetLinks[i]));
+    if(link) targetLinksNew.push_back(link);
+  }
+  this->targetLinks_ = targetLinksNew;
+  std::vector<boundingBox> ignoreBoundingBoxNew;
+  for(int i=0;i<i_param.ignoreBoundingBox.length();i++){
+    boundingBox bbx;
+    bbx.localPose.translation()[0] = i_param.ignoreBoundingBox[i].localPose.position.x;
+    bbx.localPose.translation()[1] = i_param.ignoreBoundingBox[i].localPose.position.y;
+    bbx.localPose.translation()[2] = i_param.ignoreBoundingBox[i].localPose.position.z;
+    bbx.localPose.linear() = cnoid::rotFromRpy(i_param.ignoreBoundingBox[i].localPose.orientation.r,i_param.ignoreBoundingBox[i].localPose.orientation.p,i_param.ignoreBoundingBox[i].localPose.orientation.y);
+    bbx.parentLink = this->robot_->link(std::string(i_param.ignoreBoundingBox[i].parentLinkName));
+    if(!bbx.parentLink) continue;
+    if(i_param.ignoreBoundingBox[i].dimensions.length() != 3) continue;
+    for(int j=0;j<3;j++) bbx.dimensions[j] = i_param.ignoreBoundingBox[i].dimensions[j];
+    ignoreBoundingBoxNew.push_back(bbx);
+  }
+  this->ignoreBoundingBox_ = ignoreBoundingBoxNew;
+  return true;
+}
+
+bool OctomapCollisionChecker::getParams(collision_checker_rtc::OctomapCollisionCheckerService::OctomapCollisionCheckerParam& i_param){
+  std::lock_guard<std::mutex> guard(this->mutex_);
+  std::cerr << "[" << m_profile.instance_name << "] "<< "getParams" << std::endl;
+  i_param.debugLevel = this->debuglevel_;
+  i_param.maxDistance = this->maxDistance_;
+  i_param.minDistance = this->minDistance_;
+  i_param.targetLinks.length(this->targetLinks_.size());
+  for(int i=0;i<this->targetLinks_.size();i++){
+    i_param.targetLinks[i] = this->targetLinks_[i]->name().c_str();
+  }
+  i_param.ignoreBoundingBox.length(this->ignoreBoundingBox_.size());
+  for(int i=0;i<this->ignoreBoundingBox_.size();i++){
+    i_param.ignoreBoundingBox[i].localPose.position.x = this->ignoreBoundingBox_[i].localPose.translation()[0];
+    i_param.ignoreBoundingBox[i].localPose.position.y = this->ignoreBoundingBox_[i].localPose.translation()[1];
+    i_param.ignoreBoundingBox[i].localPose.position.z = this->ignoreBoundingBox_[i].localPose.translation()[2];
+    cnoid::Vector3 rpy = cnoid::rpyFromRot(this->ignoreBoundingBox_[i].localPose.linear());
+    i_param.ignoreBoundingBox[i].localPose.orientation.r = rpy[0];
+    i_param.ignoreBoundingBox[i].localPose.orientation.p = rpy[1];
+    i_param.ignoreBoundingBox[i].localPose.orientation.y = rpy[2];
+    i_param.ignoreBoundingBox[i].parentLinkName = this->ignoreBoundingBox_[i].parentLink->name().c_str();
+    i_param.ignoreBoundingBox[i].dimensions.length(3);
+    for(int j=0;j<3;j++) i_param.ignoreBoundingBox[i].dimensions[j] = this->ignoreBoundingBox_[i].dimensions[j];
+  }
+  return true;
+}
+
 
 extern "C"
 {

@@ -28,6 +28,7 @@ endforeach(lib)
 
 rtmbuild_add_library(OctomapCollisionChecker SHARED
   OctomapCollisionChecker.cpp
+  OctomapCollisionCheckerService_impl.cpp
   )
 target_link_libraries(OctomapCollisionChecker
   ${catkin_LIBRARIES}

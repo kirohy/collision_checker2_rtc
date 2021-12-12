@@ -1,0 +1,25 @@
+#include "ExtendedDataTypes.idl" // openrtm
+
+module collision_checker_rtc
+{
+  interface OctomapCollisionCheckerService
+  {
+    struct BoundingBox
+    {
+      RTC::Pose3D localPose;
+      string parentLinkName;
+      sequence<double, 3> dimensions;
+    };
+
+    struct OctomapCollisionCheckerParam
+    {
+      long debugLevel;
+      double maxDistance;
+      double minDistance;
+      sequence<string> targetLinks;
+      sequence<BoundingBox> ignoreBoundingBox;
+    };
+    void setParams(in OctomapCollisionCheckerParam i_param);
+    void getParams(out OctomapCollisionCheckerParam i_param);
+  };
+};
