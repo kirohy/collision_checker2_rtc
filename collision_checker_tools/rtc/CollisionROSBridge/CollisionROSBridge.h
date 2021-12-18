@@ -19,6 +19,8 @@ protected:
   std::shared_ptr<urdf::Model> robot_urdf_;
   cnoid::BodyPtr robot_vrml_;
 
+  ros::NodeHandle nh; // これがないとうまく通信できなくなったり、CPU使用率100%になったりする
+
   std::string tf_prefix_;
 
   collision_checker_msgs::TimedCollisionSeq m_collisionRTM_;
