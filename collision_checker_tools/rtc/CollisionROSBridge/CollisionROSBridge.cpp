@@ -32,7 +32,7 @@ RTC::ReturnCode_t CollisionROSBridge::onInitialize(){
 
   if(pnh.hasParam("tf_prefix")){
     pnh.getParam("tf_prefix", this->tf_prefix_);
-    if(this->tf_prefix_.size() != 0) this->tf_prefix_ = "/" + this->tf_prefix_ + "/";
+    if(this->tf_prefix_.size() != 0) this->tf_prefix_ = this->tf_prefix_ + "/";
   }
 
   sub_ = pnh.subscribe("input", 1, &CollisionROSBridge::topicCallback, this);

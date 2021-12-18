@@ -11,26 +11,33 @@ from geometry_msgs.msg import Vector3
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
 
+import tf2_ros
 import tf
-from tf.transformations import *
+import time
 
 isInitial = True
 
+tfBuffer = None
 listener = None
 pub_marker = None
 sub_collision = None
 
 def callback(msg) :
-    global isInitial
+    # reduce CPU load
+    if pub_marker.get_num_connections() == 0:
+        return
 
     now = rospy.Time.now()
     markerArray = MarkerArray()
     for collision in msg.collisions:
-        if isInitial:
-            listener.waitForTransform(collision.direction21.header.frame_id, collision.point2.header.frame_id, rospy.Time(0), rospy.Duration(5.0))
-            isInitial = False
-        (trans,rot) = listener.lookupTransform(collision.direction21.header.frame_id, collision.point2.header.frame_id, rospy.Time(0))
-        link2_pose = tf.transformations.compose_matrix(translate=trans,angles=tf.transformations.euler_from_quaternion(rot))
+        try:
+            trans = tfBuffer.lookup_transform(collision.direction21.header.frame_id,collision.point2.header.frame_id, rospy.Time(0))
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            rospy.logerr(e)
+            return
+
+        link2_pose = tf.transformations.compose_matrix(translate=[trans.transform.translation.x,trans.transform.translation.y,trans.transform.translation.z],
+                                                       angles=tf.transformations.euler_from_quaternion([trans.transform.rotation.x,trans.transform.rotation.y,trans.transform.rotation.z,trans.transform.rotation.w]))
         scale, shear, angles, translation, persp = tf.transformations.decompose_matrix(link2_pose.dot(tf.transformations.compose_matrix(translate=[collision.point2.point.x,collision.point2.point.y,collision.point2.point.z])))
 
         p1 = Point(*(numpy.add(translation,numpy.multiply([collision.direction21.vector.x,collision.direction21.vector.y,collision.direction21.vector.z],collision.distance))))
@@ -100,7 +107,8 @@ def callback(msg) :
 if __name__ == '__main__':
     rospy.init_node("collision_visualizer")
 
-    listener = tf.TransformListener()
+    tfBuffer = tf2_ros.Buffer()
+    listener = tf2_ros.TransformListener(tfBuffer)
     pub_marker = rospy.Publisher('~marker', MarkerArray, queue_size=1)
     sub_collision = rospy.Subscriber("~collision", CollisionArray, callback, queue_size=1, buff_size=10000000) # buff_size is necessary to avoid lag
 
