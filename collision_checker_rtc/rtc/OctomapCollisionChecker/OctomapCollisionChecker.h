@@ -43,11 +43,11 @@ class OctomapCollisionChecker
   bool setParams(const collision_checker_rtc::OctomapCollisionCheckerService::OctomapCollisionCheckerParam& i_param);
   bool getParams(collision_checker_rtc::OctomapCollisionCheckerService::OctomapCollisionCheckerParam& i_param);
 
-  void octomapCallback(std::shared_ptr<octomap_msgs::Octomap> octomap, cnoid::Position fieldOrigin);
+  void octomapCallback(std::shared_ptr<octomap_msgs::Octomap> octomap, cnoid::Isometry3 fieldOrigin);
 
   class boundingBox {
     public:
-    cnoid::Position localPose = cnoid::Position::Identity();
+    cnoid::Isometry3 localPose = cnoid::Isometry3::Identity();
     cnoid::LinkPtr parentLink;
     cnoid::Vector3 dimensions = cnoid::Vector3::Zero();
 
@@ -96,7 +96,7 @@ class OctomapCollisionChecker
   bool thread_done_ = true;
 
   std::shared_ptr<distance_field::PropagationDistanceField> field_;
-  cnoid::Position fieldOrigin_ = cnoid::Position::Identity();
+  cnoid::Isometry3 fieldOrigin_ = cnoid::Isometry3::Identity();
   std::unordered_map<cnoid::LinkPtr, std::vector<cnoid::Vector3f> > verticesMap_;
 
   // params

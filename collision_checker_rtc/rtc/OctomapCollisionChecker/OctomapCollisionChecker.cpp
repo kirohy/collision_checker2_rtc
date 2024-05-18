@@ -200,7 +200,7 @@ RTC::ReturnCode_t OctomapCollisionChecker::onExecute(RTC::UniqueId ec_id)
     for(int i=0;i<octomap->data.size();i++) {
       octomap->data[i] = this->m_octomap_.data.octomap.data[i];
     }
-    cnoid::Position fieldOrigin;
+    cnoid::Isometry3 fieldOrigin;
     fieldOrigin.translation()[0] = this->m_octomap_.data.origin.position.x;
     fieldOrigin.translation()[1] = this->m_octomap_.data.origin.position.y;
     fieldOrigin.translation()[2] = this->m_octomap_.data.origin.position.z;
@@ -230,7 +230,7 @@ RTC::ReturnCode_t OctomapCollisionChecker::onExecute(RTC::UniqueId ec_id)
 
   // octomapCallbackが別スレッドで上書きしてもいいようにコピー
   std::shared_ptr<distance_field::PropagationDistanceField> field = this->field_;
-  cnoid::Position fieldOrigin = this->fieldOrigin_;
+  cnoid::Isometry3 fieldOrigin = this->fieldOrigin_;
   Eigen::Affine3f fieldOriginInv = fieldOrigin.inverse().cast<float>();
   if(field) {
     // update ignore bounding box
@@ -310,7 +310,7 @@ RTC::ReturnCode_t OctomapCollisionChecker::onExecute(RTC::UniqueId ec_id)
   return RTC::RTC_OK;
 }
 
-void OctomapCollisionChecker::octomapCallback(std::shared_ptr<octomap_msgs::Octomap> octomap, cnoid::Position fieldOrigin){
+void OctomapCollisionChecker::octomapCallback(std::shared_ptr<octomap_msgs::Octomap> octomap, cnoid::Isometry3 fieldOrigin){
   if(this->debuglevel_ >= 2.0) std::cerr << "[" << this->m_profile.instance_name << "] octomapCallback start" << std::endl;
 
   std::shared_ptr<octomap::AbstractOcTree> absoctree = std::shared_ptr<octomap::AbstractOcTree>(octomap_msgs::msgToMap(*octomap));
@@ -344,7 +344,7 @@ void OctomapCollisionChecker::octomapCallback(std::shared_ptr<octomap_msgs::Octo
     octree->clear(); // destructor of OcTree does not free memory for internal data.
   }else{
     this->field_ = nullptr;
-    this->fieldOrigin_ = cnoid::Position::Identity();
+    this->fieldOrigin_ = cnoid::Isometry3::Identity();
   }
 
   absoctree->clear(); // destructor of OcTree does not free memory for internal data.

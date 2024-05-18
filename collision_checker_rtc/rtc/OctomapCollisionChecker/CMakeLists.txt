@@ -12,19 +12,13 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_core
   octomap_msgs_rtmros_bridge
   )
-find_package(choreonoid REQUIRED)
+# find_package(choreonoid)を2回呼ぶとadd_library cannot create imported target "Choreonoid::Cnoid*" because another target with the same name already exists.エラーになるので、親のCMakeLists.txtで1回だけ呼ぶ.
+# find_package(choreonoid REQUIRED)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${CHOREONOID_INCLUDE_DIRS}
   )
-
-# 相対パスを絶対パスに直す
-set(CHOREONOID_BODY_LIBRARIES_ABS)
-foreach(lib ${CHOREONOID_BODY_LIBRARIES})
-  find_library(${lib}_abs NAMES ${lib} PATHS ${CHOREONOID_LIBRARY_DIRS})
-  set(CHOREONOID_BODY_LIBRARIES_ABS ${CHOREONOID_BODY_LIBRARIES_ABS} ${${lib}_abs})
-endforeach(lib)
 
 rtmbuild_add_library(OctomapCollisionChecker SHARED
   OctomapCollisionChecker.cpp
@@ -32,7 +26,7 @@ rtmbuild_add_library(OctomapCollisionChecker SHARED
   )
 target_link_libraries(OctomapCollisionChecker
   ${catkin_LIBRARIES}
-  ${CHOREONOID_BODY_LIBRARIES_ABS}
+  ${CHOREONOID_BODY_LIBRARIES}
   )
 set_target_properties(OctomapCollisionChecker PROPERTIES PREFIX "") # libOctomapCollisionChecker.so -> OctomapCollisionChecker.so
 add_dependencies(OctomapCollisionChecker RTMBUILD_${PROJECT_NAME}_genrpc) # wait for rtmbuild_genidl

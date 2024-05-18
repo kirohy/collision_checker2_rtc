@@ -317,7 +317,7 @@ protected:
 
   class boundingBox {
   public:
-    cnoid::Position pose = cnoid::Position::Identity();
+    cnoid::Isometry3 pose = cnoid::Isometry3::Identity();
     std::string linkName;
     cnoid::Vector3 dimensions = cnoid::Vector3::Zero();
 

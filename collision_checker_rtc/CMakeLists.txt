@@ -12,6 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   rtmbuild
   roscpp)
 
+# find_package(choreonoid)を2回呼ぶとadd_library cannot create imported target "Choreonoid::Cnoid*" because another target with the same name already exists.エラーになるので、親のCMakeLists.txtで1回だけ呼ぶ.
+find_package(choreonoid REQUIRED)
+
 # initialize rtmbuild (generate_messages is called)
 rtmbuild_init()
 
