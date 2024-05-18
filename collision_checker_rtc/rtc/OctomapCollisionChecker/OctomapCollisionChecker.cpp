@@ -110,10 +110,12 @@ RTC::ReturnCode_t OctomapCollisionChecker::onInitialize()
   }
 
   // get link vertices
+  // 1つのvertexを取得したら、resolutionのサイズの同じ立方体の中にある他のvertexは取得しない
+  // faceが巨大な場合、faceの内部の点をresolutionの間隔でサンプリングして取得する
   float resolution = 0.01;
   for(int i=0;i<robot_->numLinks();i++){
     cnoid::LinkPtr link = robot_->link(i);
-    std::vector<cnoid::Vector3f> vertices; // 同じvertexが2回カウントされている TODO
+    std::vector<cnoid::Vector3f> vertices;
     cnoid::SgMeshPtr mesh = convertToSgMesh(link->collisionShape());
     if(mesh) {
       mesh->updateBoundingBox();
@@ -260,7 +262,7 @@ RTC::ReturnCode_t OctomapCollisionChecker::onExecute(RTC::UniqueId ec_id)
         cnoid::Vector3f v_fieldLocal = fieldOriginInv * v;
 
         cnoid::Vector3 grad;
-        bool in_bound;
+        bool in_bound; // Whether or not the (x,y,z) is valid for gradient purposes.
         double dist = this->field_->getDistanceGradient(v_fieldLocal[0],v_fieldLocal[1],v_fieldLocal[2],grad[0],grad[1],grad[2],in_bound);
         if(in_bound && grad.norm() > 0){
           if(dist < min_dist){
