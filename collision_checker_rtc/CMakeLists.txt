@@ -9,14 +9,14 @@ set(CMAKE_BUILD_TYPE Release)
 cmake_policy(SET CMP0046 OLD)
 
 find_package(catkin REQUIRED COMPONENTS
-  rtmbuild
+  rtmbuild2
   roscpp)
 
 # find_package(choreonoid)を2回呼ぶとadd_library cannot create imported target "Choreonoid::Cnoid*" because another target with the same name already exists.エラーになるので、親のCMakeLists.txtで1回だけ呼ぶ.
 find_package(choreonoid REQUIRED)
 
 # initialize rtmbuild (generate_messages is called)
-rtmbuild_init()
+rtmbuild2_init()
 
 ###################################
 ## catkin specific configuration ##
@@ -33,10 +33,10 @@ catkin_package(
 ###########
 
 # generate idl
-rtmbuild_genidl()
+rtmbuild2_genidl()
 
 # generate bridge
-rtmbuild_genbridge()
+rtmbuild2_genbridge()
 
 add_subdirectory(rtc)
 
