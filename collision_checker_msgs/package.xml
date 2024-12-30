@@ -11,7 +11,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roscpp</depend>
-  <depend>rtmbuild</depend>
+  <depend>rtmbuild2</depend>
   <depend>geometry_msgs</depend>
 
 </package>
